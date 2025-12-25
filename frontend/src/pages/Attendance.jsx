@@ -52,12 +52,12 @@ export default function Attendance() {
                 console.log("📥 Nhận dữ liệu vân tay:", fingerprintId);
 
                 try {
-                    const result = await axios.get(`http://localhost:5000/api/student/getOne/${fingerprintId}`);
+                    const result = await axios.get(`${process.env.REACT_APP_API}/student/getOne/${fingerprintId}`);
                     const foundStudent = result.data;
                     console.log(result)
                     setStudent(foundStudent);
 
-                    const attendanceRes = await axios.post("http://localhost:5000/api/attendance/create", {
+                    const attendanceRes = await axios.post(`${process.env.REACT_APP_API}/attendance/create`, {
                         data: fingerprintId
                     });
 
@@ -79,7 +79,7 @@ export default function Attendance() {
 
     const getStudent = async () => {
         try {
-            const student = await axios.post('http://localhost:5000/api/attendance/getAll', {
+            const student = await axios.post('${process.env.REACT_APP_API}/attendance/getAll', {
                 date
             })
             setStudents(student.data.data.map(s => (

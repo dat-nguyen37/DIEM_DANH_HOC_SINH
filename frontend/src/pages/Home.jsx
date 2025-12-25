@@ -69,7 +69,7 @@ export default function Home() {
     }, [fingerprint]);
     const getStudent = async () => {
         try {
-            const student = await axios.get(`http://localhost:5000/api/student/getAll?month=${moment(date).format('MM')}&year=${moment(date).format('YYYY')}`)
+            const student = await axios.get(`${process.env.REACT_APP_API}/student/getAll?month=${moment(date).format('MM')}&year=${moment(date).format('YYYY')}`)
             setStudent(student.data.data)
         } catch (err) {
             console.log(err)
@@ -77,7 +77,7 @@ export default function Home() {
     }
     const handleDelete = async (item) => {
         try {
-            const student = await axios.delete(`http://localhost:5000/api/student/delete/${item}`)
+            const student = await axios.delete(`${process.env.REACT_APP_API}/student/delete/${item}`)
             setFingerprint(item)
             getStudent()
         } catch (err) {
@@ -91,7 +91,7 @@ export default function Home() {
 
     const ExportFile = async () => {
         try {
-            const response = await axios.post(`http://localhost:5000/api/student/exportEx`, {
+            const response = await axios.post(`${process.env.REACT_APP_API}/student/exportEx`, {
                 data: student.map(item => (
                     { "ID": item.studentId, "Tên sinh viên": item.name, "Đi học": `${item.absent}/22` }
                 )),

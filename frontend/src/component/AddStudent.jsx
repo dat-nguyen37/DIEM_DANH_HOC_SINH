@@ -56,7 +56,7 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
     }, [print, removeFinger]);
     const handleAdd = async () => {
         try {
-            await axios.post('http://localhost:5000/api/student/create', {
+            await axios.post(`${process.env.REACT_APP_API}/student/create`, {
                 studentId,
                 name,
                 fingerprint
