@@ -79,7 +79,7 @@ export default function Attendance() {
 
     const getStudent = async () => {
         try {
-            const student = await axios.post('${process.env.REACT_APP_API}/attendance/getAll', {
+            const student = await axios.post(`${process.env.REACT_APP_API}/attendance/getAll`, {
                 date
             })
             setStudents(student.data.data.map(s => (
