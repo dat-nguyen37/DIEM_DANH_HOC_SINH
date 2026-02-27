@@ -10,6 +10,36 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isShowPass = false;
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  void Login() {
+    String username = usernameController.text;
+    String password = passwordController.text;
+    if (username == "admin" && password == "admin") {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoute.main,
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Tên đăng nhập hoặc mật khẩu không đúng",
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,6 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     SizedBox(height: 30),
                     TextField(
+                      controller: usernameController,
                       decoration: InputDecoration(
                         labelText: 'Tên đăng nhập',
                         prefixIcon: Icon(
@@ -70,6 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     SizedBox(height: 30),
                     TextField(
+                      controller: passwordController,
                       obscureText: _isShowPass,
                       decoration: InputDecoration(
                         labelText: "Mật khẩu",
@@ -87,7 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                                 : Icons.visibility,
                           ),
                         ),
-                        border: OutlineInputBorder(
+                        enabledBorder: OutlineInputBorder(
                           borderRadius:
                               BorderRadius.circular(15),
                         ),
@@ -98,13 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed:
-                            () =>
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  AppRoute.main,
-                                  (route) => false,
-                                ),
+                        onPressed: Login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               Colors.blue.shade700,

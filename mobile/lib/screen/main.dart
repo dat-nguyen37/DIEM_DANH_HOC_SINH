@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/screen/attendance/attendance.dart';
+import 'package:mobile/screen/auth/profile.dart';
 import 'package:mobile/screen/home/Home.dart';
+import 'package:mobile/screen/worksheet/whorksheet.dart';
 
 class Main extends StatefulWidget {
   const Main({super.key});
@@ -20,7 +22,7 @@ class _MainState extends State<Main> {
       ),
       const BottomNavigationBarItem(
         icon: Icon(Icons.home),
-        label: 'Điểm danh',
+        label: 'Cá nhân',
       ),
     ];
     return Scaffold(
@@ -36,7 +38,7 @@ class _MainState extends State<Main> {
   }
 
   Widget getBody() {
-    final bodyList = <Widget>[Home(), Attendance()];
+    final bodyList = <Widget>[BangCongPage(), StudentProfilePage()];
     return bodyList[selectedIndex];
   }
 

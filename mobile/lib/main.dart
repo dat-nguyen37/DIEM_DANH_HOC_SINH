@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/routes/route.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
-  runApp(const MyApp());
+  initializeDateFormatting('vi_VN', null).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {

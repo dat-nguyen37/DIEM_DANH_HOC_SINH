@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/screen/home/Modal/AddStudent.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile/service/api.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,17 +12,66 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final List<Map<String, dynamic>> data = [
-    {"name": "Nguyễn Tuấn Đạt", "absent": 10},
-    {"name": "Nguyễn Tuấn Nghĩa", "absent": 4},
-    {"name": "Lưu Nhật Minh", "absent": 6},
-    {"name": "Nguyễn Trung Quang", "absent": 2},
-  ];
-
+  // final List<Map<String, dynamic>> data = [
+  //   {"name": "Nguyễn Tuấn Đạt", "absent": 10},
+  //   {"name": "Nguyễn Tuấn Nghĩa", "absent": 4},
+  //   {"name": "Lưu Nhật Minh", "absent": 6},
+  //   {"name": "Nguyễn Trung Quang", "absent": 2},
+  // ];
   final int totalSessions = 22;
   DateTime selectedDate = DateTime.now();
+  final dateFormat = DateFormat('MM/yyyy');
+  Future<void> _pickDate() async {
+    final DateTime? date = await showMonthPicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2023),
+      lastDate: DateTime(2100),
+    );
 
-  final dateFormat = DateFormat('dd/MM/yyyy');
+    if (date != null) {
+      setState(() {
+        selectedDate = date;
+        data.clear(); // Xóa dữ liệu cũ trước khi nạp mới
+      });
+      getStudent(); // Gọi lại API với tháng/năm mới
+    }
+  }
+
+  List<dynamic> data = [];
+  final ApiService apiService = ApiService();
+  void getStudent() async {
+    final response = await apiService.getStudent(
+      selectedDate.month.toString().padLeft(2, '0'),
+      selectedDate.year.toString(),
+    );
+    setState(() {
+      data = response;
+    });
+  }
+
+  Future<void> createStudent(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await apiService.createStudent(data);
+    if (response['success']) {
+      getStudent();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response['message'])),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response['message'])),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getStudent();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,21 +209,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Future<void> _pickDate() async {
-    final DateTime? date = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2100),
-    );
-
-    if (date != null) {
-      setState(() {
-        selectedDate = date;
-      });
-    }
-  }
-
   /// 🔹 mở modal thêm sinh viên
   void _openAddModal() {
     showModalBottomSheet(
@@ -185,11 +221,8 @@ class _HomeState extends State<Home> {
       ),
       builder: (context) {
         return AddStudentModal(
-          onAdd: (name, absent) {
-            setState(() {
-              data.add({"name": name, "absent": absent});
-            });
-            Navigator.pop(context);
+          onAdd: (data) {
+            createStudent(data);
           },
         );
       },
