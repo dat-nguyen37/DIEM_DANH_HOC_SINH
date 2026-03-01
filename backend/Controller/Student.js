@@ -9,7 +9,9 @@ const createStudent = async (req, res) => {
     const newStudent = new Student({
       studentId: body.studentId,
       name: body.name,
+      rfid: body.rfid,
       fingerprint: body.fingerprint,
+      faceEmbeddings: body.faceEmbeddings,
     });
     await newStudent.save();
     res.status(200).json({
@@ -46,9 +48,11 @@ const getAllStudent = async (req, res) => {
     const result = students.map((s) => ({
       id: s._id,
       studentId: s.studentId,
+      rfid: s.rfid,
       name: s.name,
       absent: attendanceMap.get(s.studentId.toString()) || 0,
       fingerprint: s.fingerprint,
+      faceEmbeddings: s.faceEmbeddings,
     }));
 
     res.status(200).json({
@@ -90,7 +94,7 @@ const exportFile = async (req, res) => {
   );
 
   // Tiêu đề bảng
-  worksheet.mergeCells("A1:B1:C1");
+  worksheet.mergeCells("A1:D1");
   const header = worksheet.getCell("A1");
   header.value = `Danh sách điểm danh tháng ${month} năm ${year}`;
   header.font = { bold: true, size: 14 };
@@ -104,14 +108,16 @@ const exportFile = async (req, res) => {
   // Tiêu đề cột
   worksheet.getCell("A3").value = "ID";
   worksheet.getCell("B3").value = "Tên sinh viên";
-  worksheet.getCell("C3").value = "Đi học";
+  worksheet.getCell("C3").value = "RFID";
+  worksheet.getCell("D3").value = "Đi học";
   worksheet.getRow(3).font = { bold: true };
 
   data.forEach((order, index) => {
     const rowIndex = index + 4; // Bắt đầu từ dòng thứ 4
     worksheet.getCell(`A${rowIndex}`).value = order["ID"];
     worksheet.getCell(`B${rowIndex}`).value = order["Tên sinh viên"];
-    worksheet.getCell(`C${rowIndex}`).value = order["Đi học"];
+    worksheet.getCell(`C${rowIndex}`).value = order["RFID"];
+    worksheet.getCell(`D${rowIndex}`).value = order["Đi học"];
   });
 
   worksheet.columns.forEach((column) => {

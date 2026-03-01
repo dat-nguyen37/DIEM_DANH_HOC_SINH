@@ -9,9 +9,11 @@ app.use(cors());
 
 const studentRouter = require("./Route/Student");
 const attendenceRouter = require("./Route/Attendence");
+const faceRouter = require("./Route/Face");
 
 app.use("/api/student", studentRouter);
 app.use("/api/attendance", attendenceRouter);
+app.use("/api/face", faceRouter);
 
 app.listen(5000, () => {
   console.log("Server is running on port 5000");
