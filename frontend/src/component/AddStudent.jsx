@@ -57,9 +57,6 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
       }}
       onClose={() => setIsModalAdd(false)}
     >
-      <EuiModalHeader>
-        <EuiModalHeaderTitle>Thêm sinh viên mới</EuiModalHeaderTitle>
-      </EuiModalHeader>
 
       <EuiModalBody>
         <EuiFlexGroup>
@@ -94,11 +91,6 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
 
           {/* CỘT PHẢI: Khung Camera (chiếm 2/3) */}
           <EuiFlexItem grow={7}>
-            <EuiText textAlign="center">
-              <b>Chụp ảnh chân dung</b>
-            </EuiText>
-            <EuiSpacer size="s" />
-
             {/* Bọc trong div có overflow nếu cần, nhưng modal to sẽ giúp camera thoải mái */}
             <div
               style={{

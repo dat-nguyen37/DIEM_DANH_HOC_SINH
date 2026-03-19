@@ -8,7 +8,7 @@ const createStudent = async (req, res) => {
 
     const newStudent = new Student({
       IDCard: body.IDCard,
-      name: body.Name,
+      Name: body.Name,
       rfid: body.rfid,
       embeddings: body.embeddings,
     });

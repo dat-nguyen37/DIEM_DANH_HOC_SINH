@@ -23,7 +23,6 @@ async function loadModel() {
 async function getEmbedding(imageBuffer) {
   await loadModel();
 
-  // Resize ảnh về 112x112
   const img = await loadImage(imageBuffer);
   const canvas = createCanvas(112, 112);
   const ctx = canvas.getContext("2d");
@@ -31,32 +30,40 @@ async function getEmbedding(imageBuffer) {
 
   const imageData = ctx.getImageData(0, 0, 112, 112).data;
 
-  // Convert sang định dạng Float32 và chuẩn hóa [-1, 1]
-  const float32Array = new Float32Array(1 * 3 * 112 * 112);
+  // --- BƯỚC MỚI: KIỂM TRA ẢNH HỢP LỆ (Simple Detector) ---
+  let totalBrightness = 0;
+  for (let i = 0; i < imageData.length; i += 4) {
+    totalBrightness += (imageData[i] + imageData[i + 1] + imageData[i + 2]) / 3;
+  }
+  const avgBrightness = totalBrightness / (112 * 112);
 
-  // Logic: (Pixel / 255 - 0.5) / 0.5  => Tương đương (Pixel - 127.5) / 128
-  for (let i = 0; i < 112 * 112; i++) {
-    float32Array[i] = (imageData[i * 4] - 127.5) / 128; // R
-    float32Array[i + 112 * 112] = (imageData[i * 4 + 1] - 127.5) / 128; // G
-    float32Array[i + 224 * 448] = (imageData[i * 4 + 2] - 127.5) / 128; // B
+  // Nếu độ sáng trung bình < 15 (trên thang 255) -> Coi như bị che camera
+  if (avgBrightness < 15) {
+    console.warn("⚠️ Cảnh báo: Camera bị che hoặc ảnh quá tối!");
+    return null;
+  }
+  // -------------------------------------------------------
+
+  const float32Array = new Float32Array(1 * 3 * 112 * 112);
+  const offset = 112 * 112;
+
+  for (let i = 0; i < offset; i++) {
+    // Sửa lỗi index kênh màu ở đây
+    float32Array[i] = (imageData[i * 4] - 127.5) / 128; // Red
+    float32Array[i + offset] = (imageData[i * 4 + 1] - 127.5) / 128; // Green
+    float32Array[i + 2 * offset] = (imageData[i * 4 + 2] - 127.5) / 128; // Blue
   }
 
-  // Tạo Tensor đầu vào
   const inputTensor = new ort.Tensor("float32", float32Array, [1, 3, 112, 112]);
-
-  // Chạy Inference
   const output = await session.run({ [session.inputNames[0]]: inputTensor });
   let embedding = output[session.outputNames[0]].data;
 
-  // Chuẩn hóa L2 (L2 Norm) để vector có độ dài = 1
+  // Chuẩn hóa L2
   let norm = 0;
   for (let i = 0; i < embedding.length; i++)
     norm += embedding[i] * embedding[i];
   norm = Math.sqrt(norm);
 
-  const finalEmbedding = Array.from(embedding).map((val) => val / norm);
-
-  return finalEmbedding; // Trả về mảng 512 số
+  return Array.from(embedding).map((val) => val / norm);
 }
-
 module.exports = { getEmbedding };

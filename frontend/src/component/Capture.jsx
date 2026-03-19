@@ -9,7 +9,12 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState("Đang khởi tạo camera...");
   const [deviceId, setDeviceId] = useState(null);
-  const [allDevices, setAllDevices] = useState([]); // Lưu danh sách cam để toggle
+  const [allDevices, setAllDevices] = useState([]);
+
+  // State cho chế độ tự động
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const instructions = [
     "Nhìn thẳng vào giữa camera",
@@ -20,7 +25,7 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
   ];
   const types = ["Thẳng", "Trái", "Phải", "Trên", "Dưới"];
 
-  // 1. Khởi tạo và quét danh sách Camera
+  // Khởi tạo camera
   const initCamera = async () => {
     try {
       await navigator.mediaDevices.getUserMedia({ video: true });
@@ -28,7 +33,6 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
       const videoDevices = devices.filter((d) => d.kind === "videoinput");
       setAllDevices(videoDevices);
 
-      // Tìm Iriun mặc định ban đầu
       const iriun = videoDevices.find((d) =>
         d.label.toLowerCase().includes("iriun"),
       );
@@ -48,21 +52,45 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
     initCamera();
   }, []);
 
-  // 2. Hàm chuyển đổi Camera (Toggle)
+  // Chuyển đổi camera
   const toggleCamera = () => {
     if (allDevices.length < 2) {
       alert("Chỉ tìm thấy 1 camera, không thể chuyển đổi.");
       return;
     }
-    // Tìm thiết bị hiện tại trong danh sách và chọn thiết bị tiếp theo
     const currentIndex = allDevices.findIndex((d) => d.deviceId === deviceId);
     const nextIndex = (currentIndex + 1) % allDevices.length;
     setDeviceId(allDevices[nextIndex].deviceId);
     setMessage("Đang chuyển đổi camera...");
   };
 
+  // Hàm tính độ sáng trung bình của ảnh (0-255)
+  const getAverageBrightness = (base64) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let sum = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          // Luma: 0.299*R + 0.587*G + 0.114*B
+          sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        }
+        const avg = sum / (data.length / 4);
+        resolve(avg);
+      };
+      img.src = base64;
+    });
+  };
+
+  // Hàm chụp thủ công (giữ nguyên)
   const capture = async () => {
-    if (webcamRef.current && step < 5) {
+    if (webcamRef.current && step < 5 && !isAutoRunning) {
       setMessage("Đang phân tích...");
       const imageSrc = webcamRef.current.getScreenshot();
       try {
@@ -76,7 +104,8 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
           setFaceEmbeddings((prev) => [...prev, data.embedding]);
           setImages((prev) => [...prev, imageSrc]);
           setStep((prev) => prev + 1);
-          if (step < 4) setMessage("Thành công! Tiếp tục.");
+          if (step < 4)
+            setMessage(`Thành công! Bước tiếp theo: ${instructions[step + 1]}`);
         }
       } catch (err) {
         setMessage("Lỗi kết nối Server.");
@@ -84,11 +113,90 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
     }
   };
 
+  // Hàm chụp tự động (được gọi khi countdown = 0)
+  const handleAutoCapture = async () => {
+    if (!webcamRef.current || step >= 5 || isCapturing) return;
+    setIsCapturing(true);
+    setMessage("Đang chụp và phân tích...");
+    const imageSrc = webcamRef.current.getScreenshot();
+
+    try {
+      // Kiểm tra độ sáng
+      const brightness = await getAverageBrightness(imageSrc);
+      if (brightness < 20) {
+        // Ngưỡng tối (có thể điều chỉnh)
+        throw new Error("Ảnh quá tối, vui lòng không che camera");
+      }
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API}/face/extract-embedding`,
+        { image: imageSrc },
+      );
+      const data = response.data;
+      if (data && data.embedding) {
+        // Thành công
+        setFaceEmbeddings((prev) => [...prev, data.embedding]);
+        setImages((prev) => [...prev, imageSrc]);
+        setStep((prev) => prev + 1);
+        setMessage(`Thành công! Bước tiếp theo: ${instructions[step + 1]}`);
+
+        if (step + 1 >= 5) {
+          // Đã hoàn thành 5 bước
+          setIsAutoRunning(false);
+        } else {
+          setCountdown(5); // Reset đếm ngược cho bước tiếp theo
+        }
+      } else {
+        throw new Error("Không nhận được embedding từ server");
+      }
+    } catch (err) {
+      setMessage(`Lỗi: ${err.message}. Thử lại...`);
+      setCountdown(5); // Thử lại bước hiện tại
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  // Effect xử lý đếm ngược tự động
+  useEffect(() => {
+    let timer;
+    if (isAutoRunning && countdown > 0 && !isCapturing) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    } else if (isAutoRunning && countdown === 0 && !isCapturing) {
+      handleAutoCapture();
+    }
+    return () => clearTimeout(timer);
+  }, [isAutoRunning, countdown, isCapturing]);
+
+  // Bắt đầu tự động
+  const startAuto = () => {
+    if (step >= 5) {
+      alert(
+        "Bạn đã hoàn thành các bước. Hãy nhấn 'Làm lại từ đầu' nếu muốn chụp lại.",
+      );
+      return;
+    }
+    setIsAutoRunning(true);
+    setCountdown(5);
+    setMessage(
+      `Bắt đầu tự động chụp....Bước ${step + 1}: ${instructions[step]}`,
+    );
+  };
+
+  // Hủy tự động
+  const cancelAuto = () => {
+    setIsAutoRunning(false);
+    setCountdown(5);
+    setMessage("Đã hủy tự động");
+  };
+
   const resetAll = () => {
     setImages([]);
     setStep(0);
     setSelectedImg(null);
     setMessage("Đã reset.");
+    setIsAutoRunning(false);
+    setCountdown(5);
   };
 
   return (
@@ -110,24 +218,32 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
 
         {step < 5 ? (
           <>
-            {/* GIAO DIỆN CHUYỂN ĐỔI CAMERA */}
+            {/* GIAO DIỆN CHUYỂN ĐỔI CAMERA (chỉ khả dụng khi không auto) */}
             <div style={toggleContainerStyle}>
               <span style={{ fontSize: "14px", fontWeight: "bold" }}>
                 Nguồn Camera:{" "}
               </span>
-              <button onClick={toggleCamera} style={toggleButtonStyle}>
-                🔄 ĐỔI SANG{" "}
+              <button
+                onClick={toggleCamera}
+                disabled={isAutoRunning}
+                style={{
+                  ...toggleButtonStyle,
+                  opacity: isAutoRunning ? 0.5 : 1,
+                  cursor: isAutoRunning ? "not-allowed" : "pointer",
+                }}
+              >
+                🔄 Đổi sang{" "}
                 {deviceId ===
                 allDevices.find((d) => d.label.toLowerCase().includes("iriun"))
                   ?.deviceId
-                  ? "CAM LAPTOP"
-                  : "CAM ĐIỆN THOẠI"}
+                  ? "mặc định"
+                  : "iriun webcam"}
               </button>
             </div>
 
             <div style={{ position: "relative", display: "inline-block" }}>
               <Webcam
-                key={deviceId} // QUAN TRỌNG: Ép render lại khi đổi Cam
+                key={deviceId}
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
@@ -145,14 +261,41 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
                 }}
                 style={webcamStyle}
               />
+              {/* Overlay hình oval */}
               <div style={overlayStyle} />
+              {/* Hiển thị đếm ngược khi đang tự động */}
+              {isAutoRunning && (
+                <div style={countdownOverlayStyle}>
+                  <span style={countdownTextStyle}>{countdown}</span>
+                </div>
+              )}
             </div>
 
             <p style={messageStyle}>{message}</p>
 
-            <button onClick={capture} style={captureButtonStyle}>
-              📸 CHỤP ẢNH BƯỚC {step + 1}
-            </button>
+            {/* Khu vực nút điều khiển */}
+            <div
+              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
+            >
+              {!isAutoRunning ? (
+                <>
+                  <button
+                    onClick={capture}
+                    style={captureButtonStyle}
+                    disabled={isAutoRunning}
+                  >
+                    📸 CHỤP THỦ CÔNG BƯỚC {step + 1}
+                  </button>
+                  <button onClick={startAuto} style={autoButtonStyle}>
+                    ▶ BẮT ĐẦU TỰ ĐỘNG
+                  </button>
+                </>
+              ) : (
+                <button onClick={cancelAuto} style={cancelButtonStyle}>
+                  ⏹ HỦY TỰ ĐỘNG
+                </button>
+              )}
+            </div>
           </>
         ) : (
           <div style={successBoxStyle}>
@@ -163,6 +306,7 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
           </div>
         )}
 
+        {/* Preview ảnh đã chụp */}
         <div style={previewContainerStyle}>
           {images.map((img, index) => (
             <div key={index} style={{ textAlign: "center" }}>
@@ -192,7 +336,7 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
   );
 };
 
-// --- STYLES ---
+// --- STYLES (giữ nguyên và bổ sung) ---
 const cardStyle = {
   backgroundColor: "white",
   maxWidth: "600px",
@@ -249,15 +393,60 @@ const overlayStyle = {
   pointerEvents: "none",
 };
 
+const countdownOverlayStyle = {
+  position: "absolute",
+  top: "100px",
+  right: "0",
+  transform: "translate(-50%, -50%)",
+  backgroundColor: "rgba(0,0,0,0.6)",
+  borderRadius: "50%",
+  width: "80px",
+  height: "80px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  pointerEvents: "none",
+};
+
+const countdownTextStyle = {
+  color: "white",
+  fontSize: "40px",
+  fontWeight: "bold",
+};
+
 const captureButtonStyle = {
-  padding: "15px 40px",
-  fontSize: "18px",
+  padding: "12px 20px",
+  fontSize: "14px",
   backgroundColor: "#00b894",
   color: "white",
   border: "none",
   borderRadius: "50px",
   cursor: "pointer",
   boxShadow: "0 4px 15px rgba(0,184,148,0.3)",
+  flex: 1,
+};
+
+const autoButtonStyle = {
+  padding: "12px 20px",
+  fontSize: "14px",
+  backgroundColor: "#0984e3",
+  color: "white",
+  border: "none",
+  borderRadius: "50px",
+  cursor: "pointer",
+  boxShadow: "0 4px 15px rgba(9,132,227,0.3)",
+  flex: 1,
+};
+
+const cancelButtonStyle = {
+  padding: "12px 40px",
+  fontSize: "16px",
+  backgroundColor: "#d63031",
+  color: "white",
+  border: "none",
+  borderRadius: "50px",
+  cursor: "pointer",
+  boxShadow: "0 4px 15px rgba(214,48,49,0.3)",
 };
 
 const resetButtonStyle = {
@@ -276,6 +465,7 @@ const previewContainerStyle = {
   marginTop: "25px",
   paddingTop: "20px",
   borderTop: "1px solid #eee",
+  flexWrap: "wrap",
 };
 
 const thumbnailStyle = {
