@@ -36,49 +36,6 @@ export default function Home() {
     })();
   }, []);
 
-  // const MQTT_OPTIONS = {
-  //     clientId: "Client_id_điemanh_vantay_" + Math.random().toString(16).substr(2, 8),
-  //     connectTimeout: 4000,
-  //     username: 'ruoidz1st',
-  //     password: 'A6k46pbc',
-  //     reconnectPeriod: 1000,
-  // };
-
-  // const MQTT_URL = process.env.REACT_APP_MQTT;
-  // const TOPIC1 = "esp32/add";
-  // const TOPIC2 = "esp32/add_resp";
-  // const TOPIC3 = "esp32/remove";
-  // const TOPIC4 = "esp32/name";
-  // const TOPIC5 = "esp32/remove_resp";
-  // const TOPIC6 = "esp32/fingerprint_id";
-  // const TOPIC7 = "esp32/fingerprint_name";
-
-  // let mqttClient;
-  // useEffect(() => {
-  //     const mqttClient = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
-
-  //     mqttClient.on("connect", () => {
-  //         console.log("🔗 Kết nối MQTT thành công!");
-  //         mqttClient.subscribe([TOPIC1, TOPIC2, TOPIC3, TOPIC4, TOPIC5, TOPIC6, TOPIC7], (err) => {
-  //             if (!err) {
-  //                 console.log("✅ Đã subscribe các topic");
-  //             }
-  //         });
-  //         if (fingerprint) {
-  //             mqttClient.publish(TOPIC3, fingerprint)
-  //             setFingerprint(null)
-  //         }
-  //     });
-
-  //     mqttClient.on("message", async (topic, message) => {
-  //         if (topic == TOPIC2) {
-  //             const data = message.toString();
-  //             console.log("Nhận dữ liệu vân tay:", data);
-  //         }
-  //     });
-
-  //     return () => mqttClient.end();
-  // }, [fingerprint]);
   const getStudent = async () => {
     try {
       const student = await axios.get(
@@ -89,15 +46,6 @@ export default function Home() {
       console.log(err);
     }
   };
-  // const handleDelete = async (item) => {
-  //     try {
-  //         const student = await axios.delete(`${process.env.REACT_APP_API}/student/delete/${item}`)
-  //         setFingerprint(item)
-  //         getStudent()
-  //     } catch (err) {
-  //         console.log(err)
-  //     }
-  // }
 
   useEffect(() => {
     getStudent();
@@ -109,10 +57,10 @@ export default function Home() {
         `${process.env.REACT_APP_API}/student/exportEx`,
         {
           data: student.map((item) => ({
-            ID: item.studentId,
+            ID: item.IDCard,
             "Tên sinh viên": item.name,
             RFID: item.rfid,
-            "Đi học": `${item.absent}/22`,
+            "Số ngày điểm danh": `${item.attendedDays}`,
           })),
           month: moment(date).format("MM"),
           year: moment(date).format("YYYY"),
@@ -147,22 +95,14 @@ export default function Home() {
   };
 
   const column = [
-    { field: "studentId", name: "ID Sinh viên" },
+    { field: "IDCard", name: "ID Sinh viên" },
     { field: "name", name: "Tên sinh viên", sortable: true },
     { field: "rfid", name: "RFID" },
     {
-      field: "absent",
-      name: "Đi học",
-      render: (item) => <EuiText>{item}/22</EuiText>,
+      field: "attendedDays",
+      name: "Số ngày điểm danh",
+      render: (item) => <EuiText>{item}</EuiText>,
     },
-    // {
-    //     field: 'fingerprint', name: 'Thao tác',
-    //     render: (item) => (
-    //         <EuiFlexGroup gutterSize='s'>
-    //             <EuiButtonIcon iconType='trash' color='danger' onClick={() => handleDelete(item)} />
-    //         </EuiFlexGroup>
-    //     )
-    // }
   ];
 
   const [pageIndex, setPageIndex] = useState(0);

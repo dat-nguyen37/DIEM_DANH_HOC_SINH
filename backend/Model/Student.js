@@ -2,21 +2,17 @@ const mongoose = require("mongoose");
 
 const Student = new mongoose.Schema(
   {
-    studentId: {
+    IDCard: {
       type: String,
     },
-    name: {
+    Name: {
       type: String,
-    },
-    fingerprint: {
-      type: String,
-      default: null,
     },
     rfid: {
       type: String,
       default: null,
     },
-    faceEmbeddings: {
+    embeddings: {
       type: [[Number]],
       default: [],
     },

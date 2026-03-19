@@ -7,11 +7,10 @@ const createStudent = async (req, res) => {
     const body = req.body;
 
     const newStudent = new Student({
-      studentId: body.studentId,
-      name: body.name,
+      IDCard: body.IDCard,
+      name: body.Name,
       rfid: body.rfid,
-      fingerprint: body.fingerprint,
-      faceEmbeddings: body.faceEmbeddings,
+      embeddings: body.embeddings,
     });
     await newStudent.save();
     res.status(200).json({
@@ -27,32 +26,33 @@ const createStudent = async (req, res) => {
 const getAllStudent = async (req, res) => {
   try {
     const { month, year } = req.query;
-    console.log(req.query);
 
     const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
     const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
     const students = await Student.find();
 
     const attendanceRecords = await Attendance.find({
-      timestamp: { $gte: startOfMonth, $lte: endOfMonth },
+      timestamps: { $gte: startOfMonth, $lte: endOfMonth },
     });
 
+    // Map lưu Set các ngày (YYYY-MM-DD) cho mỗi IDCard
     const attendanceMap = new Map();
     attendanceRecords.forEach((a) => {
-      attendanceMap.set(
-        a.studentId.toString(),
-        (attendanceMap.get(a.studentId.toString()) || 0) + 1,
-      );
+      const id = a.IDCard.toString();
+      if (!attendanceMap.has(id)) {
+        attendanceMap.set(id, new Set());
+      }
+      const dateStr = a.timestamps.toISOString().split("T")[0]; // lấy phần ngày
+      attendanceMap.get(id).add(dateStr);
     });
 
     const result = students.map((s) => ({
       id: s._id,
-      studentId: s.studentId,
+      IDCard: s.IDCard,
       rfid: s.rfid,
-      name: s.name,
-      absent: attendanceMap.get(s.studentId.toString()) || 0,
-      fingerprint: s.fingerprint,
-      faceEmbeddings: s.faceEmbeddings,
+      name: s.Name,
+      attendedDays: attendanceMap.get(s.IDCard?.toString())?.size || 0, // số ngày có điểm danh
+      embeddings: s.embeddings,
     }));
 
     res.status(200).json({
@@ -109,7 +109,7 @@ const exportFile = async (req, res) => {
   worksheet.getCell("A3").value = "ID";
   worksheet.getCell("B3").value = "Tên sinh viên";
   worksheet.getCell("C3").value = "RFID";
-  worksheet.getCell("D3").value = "Đi học";
+  worksheet.getCell("D3").value = "Số ngày điểm danh";
   worksheet.getRow(3).font = { bold: true };
 
   data.forEach((order, index) => {
@@ -117,7 +117,7 @@ const exportFile = async (req, res) => {
     worksheet.getCell(`A${rowIndex}`).value = order["ID"];
     worksheet.getCell(`B${rowIndex}`).value = order["Tên sinh viên"];
     worksheet.getCell(`C${rowIndex}`).value = order["RFID"];
-    worksheet.getCell(`D${rowIndex}`).value = order["Đi học"];
+    worksheet.getCell(`D${rowIndex}`).value = order["Số ngày điểm danh"];
   });
 
   worksheet.columns.forEach((column) => {

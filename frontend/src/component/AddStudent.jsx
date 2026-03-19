@@ -33,10 +33,10 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
         return;
       }
       await axios.post(`${process.env.REACT_APP_API}/student/create`, {
-        studentId,
+        IDCard: studentId,
         name,
         rfid,
-        faceEmbeddings,
+        embeddings: faceEmbeddings,
       });
       getStudent();
       setIsModalAdd(false);
