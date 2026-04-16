@@ -58,8 +58,8 @@ export default function Home() {
         {
           data: student.map((item) => ({
             ID: item.IDCard,
-            "Tên sinh viên": item.name,
-            RFID: item.rfid,
+            "Tên sinh viên": item.Name,
+            RFID: item.RFID,
             "Số ngày điểm danh": `${item.attendedDays}`,
           })),
           month: moment(date).format("MM"),
@@ -96,8 +96,8 @@ export default function Home() {
 
   const column = [
     { field: "IDCard", name: "ID Sinh viên" },
-    { field: "name", name: "Tên sinh viên", sortable: true },
-    { field: "rfid", name: "RFID" },
+    { field: "Name", name: "Tên sinh viên", sortable: true },
+    { field: "RFID", name: "RFID" },
     {
       field: "attendedDays",
       name: "Số ngày điểm danh",

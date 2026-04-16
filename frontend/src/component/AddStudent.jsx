@@ -34,8 +34,8 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
       }
       await axios.post(`${process.env.REACT_APP_API}/student/create`, {
         IDCard: studentId,
-        name,
-        rfid,
+        Name: name,
+        RFID: rfid,
         embeddings: faceEmbeddings,
       });
       getStudent();

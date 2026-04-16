@@ -9,7 +9,7 @@ const createStudent = async (req, res) => {
     const newStudent = new Student({
       IDCard: body.IDCard,
       Name: body.Name,
-      rfid: body.rfid,
+      RFID: body.RFID,
       embeddings: body.embeddings,
     });
     await newStudent.save();
@@ -49,8 +49,8 @@ const getAllStudent = async (req, res) => {
     const result = students.map((s) => ({
       id: s._id,
       IDCard: s.IDCard,
-      rfid: s.rfid,
-      name: s.Name,
+      RFID: s.RFID,
+      Name: s.Name,
       attendedDays: attendanceMap.get(s.IDCard?.toString())?.size || 0, // số ngày có điểm danh
       embeddings: s.embeddings,
     }));

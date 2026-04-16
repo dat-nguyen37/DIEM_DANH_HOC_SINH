@@ -8,7 +8,7 @@ const Student = new mongoose.Schema(
     Name: {
       type: String,
     },
-    rfid: {
+    RFID: {
       type: String,
       default: null,
     },

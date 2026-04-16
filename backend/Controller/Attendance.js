@@ -90,7 +90,7 @@ const getAttendance = async (req, res) => {
 
       return {
         IDCard: student.IDCard,
-        name: student.Name,
+        Name: student.Name,
         status,
         timeIn,
         timeOut,

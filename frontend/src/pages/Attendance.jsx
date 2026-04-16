@@ -36,7 +36,7 @@ export default function Attendance() {
       setStudents(
         student.data.data.map((s) => ({
           IDCard: s.IDCard,
-          name: s.name,
+          Name: s.Name,
           timeIn: s.timeIn,
           timeOut: s.timeOut,
         })),
@@ -51,7 +51,7 @@ export default function Attendance() {
 
   const column = [
     { field: "IDCard", name: "ID Sinh viên" },
-    { field: "name", name: "Tên sinh viên", sortable: true },
+    { field: "Name", name: "Tên sinh viên", sortable: true },
     {
       field: "timeIn",
       name: "Thời gian vào",
