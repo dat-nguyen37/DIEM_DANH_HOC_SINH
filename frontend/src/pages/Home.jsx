@@ -13,6 +13,8 @@ import {
   EuiSpacer,
   EuiText,
   EuiTitle,
+  EuiImage,
+  EuiAvatar,
 } from "@elastic/eui";
 import AddStudent from "../component/AddStudent";
 import axios from "axios";
@@ -93,8 +95,23 @@ export default function Home() {
       console.log(err);
     }
   };
-
   const column = [
+    {
+      field: "url",
+      name: "Avatar",
+      render: (url, record) => (
+        <EuiAvatar
+          size="l"
+          shape="circle"
+          name={record.Name}
+          imageUrl={
+            url
+              ? `${process.env.REACT_APP_API.replace("/api", "")}${url}`
+              : "/assets/user.png"
+          }
+        />
+      ),
+    },
     { field: "IDCard", name: "ID Sinh viên" },
     { field: "Name", name: "Tên sinh viên", sortable: true },
     { field: "RFID", name: "RFID" },

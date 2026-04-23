@@ -16,6 +16,10 @@ const Student = new mongoose.Schema(
       type: [[Number]],
       default: [],
     },
+    url: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

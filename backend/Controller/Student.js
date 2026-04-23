@@ -1,16 +1,24 @@
 const Attendance = require("../Model/Attendance");
 const Student = require("../Model/Student");
 const ExcelJS = require("exceljs");
+const fs = require("fs");
+const path = require("path");
 
 const createStudent = async (req, res) => {
   try {
     const body = req.body;
+    let imageUrl = null;
+
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
 
     const newStudent = new Student({
       IDCard: body.IDCard,
       Name: body.Name,
       RFID: body.RFID,
-      embeddings: body.embeddings,
+      embeddings: body.embeddings ? JSON.parse(body.embeddings) : [],
+      url: imageUrl,
     });
     await newStudent.save();
     res.status(200).json({
@@ -51,6 +59,7 @@ const getAllStudent = async (req, res) => {
       IDCard: s.IDCard,
       RFID: s.RFID,
       Name: s.Name,
+      url: s.url,
       attendedDays: attendanceMap.get(s.IDCard?.toString())?.size || 0, // số ngày có điểm danh
       embeddings: s.embeddings,
     }));

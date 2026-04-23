@@ -14,6 +14,7 @@ import {
   EuiModalHeaderTitle,
   EuiSpacer,
   EuiText,
+  EuiFilePicker,
 } from "@elastic/eui";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
@@ -25,6 +26,21 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
   const [name, setName] = useState(null);
   const [rfid, setRfid] = useState(null);
   const [faceEmbeddings, setFaceEmbeddings] = useState([]);
+  const [profileImage, setProfileImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  useEffect(() => {
+    if (!profileImage) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(profileImage);
+    setPreviewUrl(objectUrl);
+
+    // Dọn dẹp URL khi component unmount hoặc profileImage thay đổi
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [profileImage]);
 
   const handleAdd = async () => {
     try {
@@ -32,11 +48,19 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
         alert("Không thể trích xuất đặc điểm khuôn mặt từ ảnh đã chụp!");
         return;
       }
-      await axios.post(`${process.env.REACT_APP_API}/student/create`, {
-        IDCard: studentId,
-        Name: name,
-        RFID: rfid,
-        embeddings: faceEmbeddings,
+      const formData = new FormData();
+      formData.append("IDCard", studentId);
+      formData.append("Name", name);
+      formData.append("RFID", rfid);
+      formData.append("embeddings", JSON.stringify(faceEmbeddings));
+      if (profileImage) {
+        formData.append("image", profileImage);
+      }
+
+      await axios.post(`${process.env.REACT_APP_API}/student/create`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
       getStudent();
       setIsModalAdd(false);
@@ -87,6 +111,32 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
                 fullWidth
               />
             </EuiFormRow>
+            <EuiSpacer size="m" />
+            <EuiFormRow label={<b>Ảnh thẻ (Chọn từ máy tính)</b>} fullWidth>
+              <EuiFilePicker
+                fullWidth
+                initialPromptText="Chọn ảnh từ máy tính"
+                onChange={(files) => {
+                  if (files.length > 0) {
+                    setProfileImage(files[0]);
+                  } else {
+                    setProfileImage(null);
+                  }
+                }}
+                display="large"
+              />
+            </EuiFormRow>
+            {profileImage && (
+              <div style={{ marginTop: "10px", textAlign: "center" }}>
+                <EuiImage
+                  size="m"
+                  hasShadow
+                  alt="Preview"
+                  src={previewUrl || ""}
+                  style={{ maxHeight: "150px", borderRadius: "8px" }}
+                />
+              </div>
+            )}
           </EuiFlexItem>
 
           {/* CỘT PHẢI: Khung Camera (chiếm 2/3) */}
