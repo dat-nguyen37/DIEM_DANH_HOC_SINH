@@ -57,11 +57,15 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
         formData.append("image", profileImage);
       }
 
-      await axios.post(`${process.env.REACT_APP_API}/student/create`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      await axios.post(
+        `${process.env.REACT_APP_API}/student/create`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
-      });
+      );
       getStudent();
       setIsModalAdd(false);
       alert("Thêm sinh viên mới thành công!");
@@ -81,7 +85,6 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
       }}
       onClose={() => setIsModalAdd(false)}
     >
-
       <EuiModalBody>
         <EuiFlexGroup>
           {/* CỘT TRÁI: Nhập thông tin (chiếm 1/3) */}
@@ -115,7 +118,7 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
             <EuiFormRow label={<b>Ảnh thẻ (Chọn từ máy tính)</b>} fullWidth>
               <EuiFilePicker
                 fullWidth
-                initialPromptText="Chọn ảnh từ máy tính"
+                initialPromptText="Tải ảnh lên"
                 onChange={(files) => {
                   if (files.length > 0) {
                     setProfileImage(files[0]);
