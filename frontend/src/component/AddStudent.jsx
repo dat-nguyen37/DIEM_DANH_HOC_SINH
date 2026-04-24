@@ -115,7 +115,7 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
               />
             </EuiFormRow>
             <EuiSpacer size="m" />
-            <EuiFormRow label={<b>Ảnh thẻ (Chọn từ máy tính)</b>} fullWidth>
+            <EuiFormRow label={<b>Avatar</b>} fullWidth>
               <EuiFilePicker
                 fullWidth
                 initialPromptText="Tải ảnh lên"
