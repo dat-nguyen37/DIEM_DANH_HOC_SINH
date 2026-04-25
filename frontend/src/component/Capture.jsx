@@ -50,6 +50,7 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
 
   useEffect(() => {
     initCamera();
+    setMessage("Nhìn thẳng vào camera và đặt mặt vào khung oval");
   }, []);
 
   // Chuyển đổi camera
@@ -88,15 +89,59 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
     });
   };
 
-  // Hàm chụp thủ công (giữ nguyên)
+  // Crop vùng trung tâm frame (nơi oval hướng dẫn đặt mặt)
+  // Khớp với cách Python Haar Cascade crop mặt từ trung tâm frame
+  const getFaceCrop = (base64) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const W = img.width;
+        const H = img.height;
+
+        // Oval overlay nằm ở center X, 45% từ trên
+        // Lấy vùng crop hình vuông bao quanh oval (khoảng 55% chiều cao)
+        const cropSize = Math.round(H * 0.72);
+        const cropX = Math.round(W / 2 - cropSize / 2);
+        const cropY = Math.round(H * 0.45 - cropSize / 2);
+        const safeX = Math.max(0, cropX);
+        const safeY = Math.max(0, cropY);
+        const safeW = Math.min(cropSize, W - safeX);
+        const safeH = Math.min(cropSize, H - safeY);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 112;
+        canvas.height = 112;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, safeX, safeY, safeW, safeH, 0, 0, 112, 112);
+        resolve(canvas.toDataURL("image/jpeg", 0.95));
+      };
+      img.onerror = () => resolve(null);
+      img.src = base64;
+    });
+  };
+
+  // Hàm chụp thủ công
   const capture = async () => {
     if (webcamRef.current && step < 5 && !isAutoRunning) {
-      setMessage("Đang phân tích...");
+      setMessage("📸 Đang chụp và trích xuất đặc điểm...");
       const imageSrc = webcamRef.current.getScreenshot();
       try {
+        const brightness = await getAverageBrightness(imageSrc);
+        if (brightness < 30) {
+          setMessage("⚠️ Ảnh quá tối hoặc camera bị che!");
+          return;
+        }
+
+        const croppedFace = await getFaceCrop(imageSrc);
+        if (!croppedFace) {
+          setMessage("⚠️ Không thể xử lý ảnh, thử lại!");
+          return;
+        }
+
+        setMessage("⏳ Đang trích xuất đặc điểm...");
         const response = await axios.post(
           `${process.env.REACT_APP_API}/face/extract-embedding`,
-          { image: imageSrc },
+          { image: croppedFace },
         );
         const data = response.data;
 
@@ -105,10 +150,10 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
           setImages((prev) => [...prev, imageSrc]);
           setStep((prev) => prev + 1);
           if (step < 4)
-            setMessage(`Thành công! Bước tiếp theo: ${instructions[step + 1]}`);
+            setMessage(`✅ Thành công! Bước tiếp theo: ${instructions[step + 1]}`);
         }
       } catch (err) {
-        setMessage("Lỗi kết nối Server.");
+        setMessage("❌ Lỗi kết nối Server.");
       }
     }
   };
@@ -123,14 +168,19 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
     try {
       // Kiểm tra độ sáng
       const brightness = await getAverageBrightness(imageSrc);
-      if (brightness < 20) {
+      if (brightness < 30) {
         // Ngưỡng tối (có thể điều chỉnh)
-        throw new Error("Ảnh quá tối, vui lòng không che camera");
+        throw new Error("Ảnh quá tối hoặc camera bị che");
+      }
+
+      const croppedFace = await getFaceCrop(imageSrc);
+      if (!croppedFace) {
+        throw new Error("Không nhận diện được khuôn mặt");
       }
 
       const response = await axios.post(
         `${process.env.REACT_APP_API}/face/extract-embedding`,
-        { image: imageSrc },
+        { image: croppedFace },
       );
       const data = response.data;
       if (data && data.embedding) {
