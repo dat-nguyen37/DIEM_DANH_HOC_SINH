@@ -49,6 +49,33 @@ export default function Attendance() {
     getStudent();
   }, [date]);
 
+  const exportFile = async () => {
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API}/attendance/exportByDate`,
+        { date },
+        { responseType: "blob" }
+      );
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `Diem_danh_${moment(date).format("DD-MM-YYYY")}.xlsx`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.log(err);
+      alert("Xuất file thất bại!");
+    }
+  };
+
   const column = [
     { field: "IDCard", name: "ID Sinh viên" },
     { field: "Name", name: "Tên sinh viên", sortable: true },
@@ -125,7 +152,21 @@ export default function Attendance() {
           <EuiText>
             <b>Điểm danh: {moment(date).format("DD/MM/YYYY")}</b>
           </EuiText>
-          <EuiDatePicker selected={date} onChange={(date) => setDate(date)} />
+          <EuiFlexGroup gutterSize="s" responsive={false}>
+            <EuiFlexItem grow={false}>
+              <EuiDatePicker selected={date} onChange={(date) => setDate(date)} />
+            </EuiFlexItem>
+            <EuiFlexItem grow={false}>
+              <EuiButton
+                iconType="/assets/excel.png"
+                fill
+                iconSide="right"
+                onClick={exportFile}
+              >
+                Xuất file
+              </EuiButton>
+            </EuiFlexItem>
+          </EuiFlexGroup>
         </EuiFlexGroup>
         <EuiBasicTable
           items={itemOfPages}
