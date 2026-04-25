@@ -291,15 +291,19 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
               </button>
             </div>
 
-            <div style={{ position: "relative", display: "inline-block" }}>
+            <div style={{ position: "relative", display: "block", width: "100%", overflow: "hidden", borderRadius: "12px" }}>
               <Webcam
                 key={deviceId}
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
-                width={480}
+                width="100%"
+                playsInline
                 videoConstraints={{
-                  deviceId: deviceId ? { exact: deviceId } : undefined,
+                  ...(deviceId
+                    ? { deviceId: { exact: deviceId } }
+                    : { facingMode: "user" }
+                  ),
                 }}
                 onUserMedia={(stream) => {
                   const label = stream.getVideoTracks()[0].label;
@@ -307,7 +311,9 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
                 }}
                 onUserMediaError={() => {
                   setDeviceId(null);
-                  setMessage("Lỗi camera chọn. Đang dùng mặc định.");
+                  setMessage("Lỗi camera. Đang thử lại với camera mặc định.");
+                  // Thử lại với camera mặc định
+                  setTimeout(() => initCamera(), 1000);
                 }}
                 style={webcamStyle}
               />
@@ -325,7 +331,13 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
 
             {/* Khu vực nút điều khiển */}
             <div
-              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
+              style={{
+                display: "flex",
+                gap: "10px",
+                justifyContent: "center",
+                flexWrap: "wrap",
+                marginTop: "12px",
+              }}
             >
               {!isAutoRunning ? (
                 <>
@@ -334,15 +346,15 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
                     style={captureButtonStyle}
                     disabled={isAutoRunning}
                   >
-                    📸 CHỤP THỦ CÔNG BƯỚC {step + 1}
+                    📸 Chụp bước {step + 1}
                   </button>
                   <button onClick={startAuto} style={autoButtonStyle}>
-                    ▶ BẮT ĐẦU TỰ ĐỘNG
+                    ▶ Tự động
                   </button>
                 </>
               ) : (
                 <button onClick={cancelAuto} style={cancelButtonStyle}>
-                  ⏹ HỦY TỰ ĐỘNG
+                  ⏹ Hủy
                 </button>
               )}
             </div>
@@ -389,11 +401,13 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
 // --- STYLES (giữ nguyên và bổ sung) ---
 const cardStyle = {
   backgroundColor: "white",
+  width: "100%",
   maxWidth: "600px",
   margin: "0 auto",
-  padding: "30px",
+  padding: "16px",
   borderRadius: "15px",
   boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+  boxSizing: "border-box",
 };
 
 const toggleContainerStyle = {
@@ -420,6 +434,8 @@ const webcamStyle = {
   borderRadius: "12px",
   border: "5px solid #2d3436",
   backgroundColor: "#000",
+  width: "100%",
+  display: "block",
 };
 
 const messageStyle = {
@@ -433,13 +449,13 @@ const messageStyle = {
 
 const overlayStyle = {
   position: "absolute",
-  top: "45%",
+  top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  border: "2px dashed rgba(255, 255, 255, 0.5)",
+  border: "3px dashed rgba(255, 255, 255, 0.75)",
   borderRadius: "50%",
-  width: "200px",
-  height: "260px",
+  width: "52%",
+  aspectRatio: "3 / 4",
   pointerEvents: "none",
 };
 
@@ -465,38 +481,44 @@ const countdownTextStyle = {
 };
 
 const captureButtonStyle = {
-  padding: "12px 20px",
-  fontSize: "14px",
+  padding: "10px 14px",
+  fontSize: "13px",
+  fontWeight: "bold",
   backgroundColor: "#00b894",
   color: "white",
   border: "none",
-  borderRadius: "50px",
+  borderRadius: "10px",
   cursor: "pointer",
   boxShadow: "0 4px 15px rgba(0,184,148,0.3)",
   flex: 1,
+  whiteSpace: "nowrap",
 };
 
 const autoButtonStyle = {
-  padding: "12px 20px",
-  fontSize: "14px",
+  padding: "10px 14px",
+  fontSize: "13px",
+  fontWeight: "bold",
   backgroundColor: "#0984e3",
   color: "white",
   border: "none",
-  borderRadius: "50px",
+  borderRadius: "10px",
   cursor: "pointer",
   boxShadow: "0 4px 15px rgba(9,132,227,0.3)",
   flex: 1,
+  whiteSpace: "nowrap",
 };
 
 const cancelButtonStyle = {
-  padding: "12px 40px",
-  fontSize: "16px",
+  padding: "10px 24px",
+  fontSize: "13px",
+  fontWeight: "bold",
   backgroundColor: "#d63031",
   color: "white",
   border: "none",
-  borderRadius: "50px",
+  borderRadius: "10px",
   cursor: "pointer",
   boxShadow: "0 4px 15px rgba(214,48,49,0.3)",
+  whiteSpace: "nowrap",
 };
 
 const resetButtonStyle = {

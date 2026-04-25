@@ -5,6 +5,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* Ngăn scroll ngang trên mobile */
+}
+
+*, *::before, *::after {
+  box-sizing: border-box; /* Đảm bảo width không bị tràn */
 }
 
 code {
