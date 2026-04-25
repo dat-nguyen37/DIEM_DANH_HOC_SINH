@@ -350,9 +350,9 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
                   >
                     📸 Chụp bước {step + 1}
                   </button>
-                  <button onClick={startAuto} style={autoButtonStyle}>
+                  {/* <button onClick={startAuto} style={autoButtonStyle}>
                     ▶ Tự động
-                  </button>
+                  </button> */}
                 </>
               ) : (
                 <button onClick={cancelAuto} style={cancelButtonStyle}>
