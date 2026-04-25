@@ -86,9 +86,22 @@ const getStudent = async (req, res) => {
 };
 const DeleteStudent = async (req, res) => {
   try {
-    await Student.findOneAndDelete({ fingerprint: req.params.id.toString() });
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    if (student.url) {
+      const filePath = path.join(__dirname, "..", student.url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    await Student.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Delete student success" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "error" });
   }
 };

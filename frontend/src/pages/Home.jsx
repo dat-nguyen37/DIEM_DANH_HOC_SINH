@@ -95,6 +95,17 @@ export default function Home() {
       console.log(err);
     }
   };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${process.env.REACT_APP_API}/student/delete/${id}`);
+      getStudent();
+      alert("Xóa sinh viên thành công");
+    } catch (err) {
+      console.log(err);
+      alert("Xóa sinh viên thất bại");
+    }
+  };
   const column = [
     {
       field: "url",
@@ -119,6 +130,21 @@ export default function Home() {
       field: "attendedDays",
       name: "Số ngày điểm danh",
       render: (item) => <EuiText>{item}</EuiText>,
+    },
+    {
+      name: "Hành động",
+      render: (record) => (
+        <EuiButtonIcon
+          onClick={() => {
+            if (window.confirm("Bạn có chắc chắn muốn xóa sinh viên này?")) {
+              handleDelete(record.id);
+            }
+          }}
+          iconType="trash"
+          color="danger"
+          aria-label="Delete"
+        />
+      ),
     },
   ];
 
