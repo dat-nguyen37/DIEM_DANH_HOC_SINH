@@ -253,10 +253,12 @@ const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
     <div
       style={{
         textAlign: "center",
-        padding: "20px",
+        padding: "12px",
+        paddingBottom: "100px",
         fontFamily: "Arial",
         backgroundColor: "#f4f7f6",
-        minHeight: "100vh",
+        minHeight: "100dvh",
+        boxSizing: "border-box",
       }}
     >
       <div style={cardStyle}>

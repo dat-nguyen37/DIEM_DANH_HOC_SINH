@@ -76,16 +76,16 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
   };
   return (
     <EuiModal
-      // 1. Tăng độ rộng tối đa và ép width để modal to ra
       style={{
         width: "1000px",
-        maxWidth: "90vw",
-        minHeight: "100vh",
-        paddingBlockEnd: 0,
+        maxWidth: "95vw",
+        maxHeight: "90dvh",
+        display: "flex",
+        flexDirection: "column",
       }}
       onClose={() => setIsModalAdd(false)}
     >
-      <EuiModalBody>
+      <EuiModalBody style={{ overflowY: "auto", flex: 1 }}>
         <EuiFlexGroup>
           {/* CỘT TRÁI: Nhập thông tin (chiếm 1/3) */}
           <EuiFlexItem grow={3}>
