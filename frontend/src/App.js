@@ -1,5 +1,6 @@
 import Attendance from "./pages/Attendance";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
       <Routes>
         <Route index element={<Home />} />
         <Route path="/diemdanh" element={<Attendance />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </BrowserRouter>
   )

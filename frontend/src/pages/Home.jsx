@@ -30,6 +30,7 @@ export default function Home() {
   const [student, setStudent] = useState([]);
   const [date, setDate] = useState(moment());
   const [fingerprint, setFingerprint] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
 
   const navType = useNavigationType();
   useEffect(() => {
@@ -131,7 +132,10 @@ export default function Home() {
       name: "Số ngày điểm danh",
       render: (item) => <EuiText>{item}</EuiText>,
     },
-    {
+  ];
+
+  if (isLoggedIn) {
+    column.push({
       name: "Hành động",
       render: (record) => (
         <EuiButtonIcon
@@ -145,8 +149,8 @@ export default function Home() {
           aria-label="Delete"
         />
       ),
-    },
-  ];
+    });
+  }
 
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -219,16 +223,34 @@ export default function Home() {
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
               <EuiFlexGroup>
-                <EuiButton
-                  fill
-                  iconType="plusInCircle"
-                  onClick={() => setIsModalAdd(true)}
-                >
-                  Thêm sinh viên
-                </EuiButton>
+                {isLoggedIn && (
+                  <EuiButton
+                    fill
+                    iconType="plusInCircle"
+                    onClick={() => setIsModalAdd(true)}
+                  >
+                    Thêm sinh viên
+                  </EuiButton>
+                )}
                 <EuiButton fill iconType="list" href="/diemdanh">
                   Điểm danh
                 </EuiButton>
+                {isLoggedIn ? (
+                  <EuiButton
+                    fill
+                    color="danger"
+                    onClick={() => {
+                      localStorage.removeItem("user");
+                      setIsLoggedIn(false);
+                    }}
+                  >
+                    Đăng xuất
+                  </EuiButton>
+                ) : (
+                  <EuiButton fill href="/login">
+                    Đăng nhập
+                  </EuiButton>
+                )}
               </EuiFlexGroup>
             </EuiFlexItem>
           </EuiFlexGroup>
