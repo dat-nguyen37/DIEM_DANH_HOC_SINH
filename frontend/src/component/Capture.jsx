@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Webcam from "react-webcam";
 import axios from "axios";
 
-const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings }) => {
+const CaptureProfile = ({ faceEmbeddings, setFaceEmbeddings, images, setImages }) => {
   const webcamRef = useRef(null);
   const [step, setStep] = useState(0);
   const [selectedImg, setSelectedImg] = useState(null);
-  const [images, setImages] = useState([]);
   const [message, setMessage] = useState("Đang khởi tạo camera...");
   const [deviceId, setDeviceId] = useState(null);
   const [allDevices, setAllDevices] = useState([]);

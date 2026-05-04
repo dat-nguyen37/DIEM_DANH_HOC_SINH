@@ -26,6 +26,7 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
   const [name, setName] = useState(null);
   const [rfid, setRfid] = useState(null);
   const [faceEmbeddings, setFaceEmbeddings] = useState([]);
+  const [capturedImages, setCapturedImages] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -53,6 +54,7 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
       formData.append("Name", name);
       formData.append("RFID", rfid);
       formData.append("embeddings", JSON.stringify(faceEmbeddings));
+      formData.append("images", JSON.stringify(capturedImages));
       if (profileImage) {
         formData.append("image", profileImage);
       }
@@ -157,6 +159,8 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
               <CaptureProfile
                 faceEmbeddings={faceEmbeddings}
                 setFaceEmbeddings={setFaceEmbeddings}
+                images={capturedImages}
+                setImages={setCapturedImages}
               />
             </div>
           </EuiFlexItem>

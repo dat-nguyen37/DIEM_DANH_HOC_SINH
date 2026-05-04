@@ -19,6 +19,7 @@ const createStudent = async (req, res) => {
       RFID: body.RFID,
       embeddings: body.embeddings ? JSON.parse(body.embeddings) : [],
       url: imageUrl,
+      images: body.images ? JSON.parse(body.images) : [],
     });
     await newStudent.save();
     res.status(200).json({
