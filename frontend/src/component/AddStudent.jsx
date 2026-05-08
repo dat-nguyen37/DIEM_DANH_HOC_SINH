@@ -53,7 +53,7 @@ export default function AddStudent({ setIsModalAdd, getStudent }) {
       formData.append("IDCard", studentId);
       formData.append("Name", name);
       formData.append("RFID", rfid);
-      formData.append("embeddings", JSON.stringify(faceEmbeddings));
+      // formData.append("embeddings", JSON.stringify(faceEmbeddings));
       formData.append("images", JSON.stringify(capturedImages));
       if (profileImage) {
         formData.append("image", profileImage);
